@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,  initial-scale=1.0">
+    <meta name="author" content="Elatyeb Ali Abdalla Mohamed">
+    <title>First Aid</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding-bottom: 80px; /* Increased space for fixed controls */
+        }
+        .slide {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 20px;
+            margin-bottom: 0;
+        }
+        img {
+            width: 200px;
+            height: auto;
+        }
+        p {
+            width: 86%;
+            font-size: large;
+            font-weight: 700;
+        }
+        .controls {
+            position: fixed;
+            bottom: 60px; /* Adjusted to sit above the footer */
+            left: 0;
+            right: 0;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000; /* Ensure it appears above other elements */
+        }
+        input[type="number"] {
+            padding: 5px;
+            width: 80px;
+        }
+        button {
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        .objective {
+            color: blue;
+            font-size: large;
+        }
+        .keyWord {
+            color: red;
+            font-size: large;
+        }
+        h3 {
+            text-align: center;
+        }
+        .arabic {
+            direction: ltr;
+            text-align: right;
+            color: green;
+        }
+        select {
+            padding: 10px;
+            font-size: large;
+            font-weight: 700;
+            border: 2px solid #007BFF;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+            color: black;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        select:hover {
+            border-color: #0056b3;
+        }
+        select:focus {
+            outline: none;
+            border-color: #0056b3;
+        }
+        .ca {
+            display: none;
+        }
+        .feedback {
+            margin-left: 10px;
+        }
+        footer {
+            background-color: #f8f9fa; /* Light gray background */
+            padding: 10px; /* Padding for space */
+            text-align: center; /* Center alignment */
+            position: fixed; /* Fixed position */
+            bottom: 0; /* Stick to the bottom */
+            width: 100%; /* Full width */
+            border-top: 1px solid #ccc; /* Top border */
+            z-index: 999; /* Ensure it appears below controls */
+        }
+        footer p {
+            margin: 0; /* Remove default margin */
+            font-size: 14px; /* Font size */
+            color: #555; /* Dark gray text color */
+            line-height: 1.5; /* Line height for readability */
+        }
+    </style>
+</head>
+<body>
+
+    <h3>Career Paths - Medical <br> Vocabulary</h3>
+    <div class="slide"></div>
+    
+    <audio id="audioPlayer" controls></audio>
+    
+    <div class="controls">
+        <button onclick="previousSlide()">
+            <img src="backward.png" alt="Previous" style="width: 20px; height: 20px;">
+        </button>
+        <button onclick="nextSlide()">
+            <img src="forward.png" alt="Next" style="width: 20px; height: 20px;">
+        </button>
+        <input type="number" id="slideInput" min="1" max="4" placeholder="Slide " />
+        <button onclick="goToSlide()">&#128269;</button>
+        <button onclick="checkAnswer()">Check</button>
+        <span class="feedback" id="feedback"></span>
+    </div>
+
+    <script>
+        let utterance = new SpeechSynthesisUtterance();
+        const Items = [
+            {
+                audio:"wound bandage CPR  burn laceration pulse.mp3",
+                image:"pulse.jpeg",
+                Question:"See the picture above. <br> Listen to the audio below. <br> Match picture and word(s).",
+                multipleChoice:["Click here to select:","wound","bandage","CPR","laceration","pulse","burn"],
+                ca:"pulse"
+            },
+            {
+                audio:"wound bandage CPR  burn laceration pulse.mp3",
+                image:"cpr.jpeg",
+                Question:"See the picture above. <br> Listen to the audio below. <br> Match picture and word(s).",
+                multipleChoice:["Click here to select:","wound","bandage","CPR","laceration","pulse","burn"],
+                ca:"CPR"
+            },
+            {
+                audio:"wound bandage CPR  burn laceration pulse.mp3",
+                image:"burn.jpeg",
+                Question:"See the picture above. <br> Listen to the audio below. <br> Match picture and word(s).",
+                multipleChoice:["Click here to select:","wound","bandage","CPR","laceration","pulse","burn"],
+                ca:"burn"
+            },
+            {
+                audio:"wound bandage CPR  burn laceration pulse.mp3",
+                image:"bandage.jpeg",
+                Question:"See the picture above. <br> Listen to the audio below. <br> Match picture and word(s).",
+                multipleChoice:["Click here to select:","wound","bandage","CPR","laceration","pulse","burn"],
+                ca:"bandage"
+            },
+            {
+                audio:"wound bandage CPR  burn laceration pulse.mp3",
+                image:"lacerations.jpg",
+                Question:"See the picture above. <br> Listen to the audio below. <br> Match picture and word(s).",
+                multipleChoice:["Click here to select:","wound","bandage","CPR","laceration","pulse","burn"],
+                ca:"laceration"
+            },
+            {
+                audio:"wound bandage CPR  burn laceration pulse.mp3",
+                image:"wound.jpeg",
+                Question:"See the picture above. <br> Listen to the audio below. <br> Match picture and word(s).",
+                multipleChoice:["Click here to select:","wound","bandage","CPR","laceration","pulse","burn"],
+                ca:"wound"
+            },
+        ];
+
+        let currentAudioIndex = 0;
+
+        const propertyHandlers = {
+            Objective: (value) => `<p class="objective">${value}</p>`,
+            keyWord: (value) => `<p class="keyWord">${value}</p>`,
+            Arabic: (value) => `<p class=arabic>${value}</p>`,
+            Question: (value) => `<p>${value}</p>`,
+            multipleChoice: (options) => {
+                const selectElement = `<select id="answerSelect">
+                    ${options.map(option => `<option value="${option}">${option}</option>`).join('')}
+                </select>`;
+                return `<div>${selectElement}</div>`;
+            },
+            English: (value) => `<details><summary>Audio Script:</summary><p>${value}</p></details>`,
+            image: (value) => `
+                <details>
+                    <summary>Show Image</summary>
+                    <img src="${value}" alt="Description of the image">
+                </details>`,
+        };
+
+        const audioPlayer = document.getElementById("audioPlayer");
+        audioPlayer.src = Items[currentAudioIndex].audio;
+
+        function displayData() {
+            const slideContainer = document.querySelector(".slide");
+            slideContainer.innerHTML = '';
+            
+            const numberP = document.createElement("p");
+            numberP.textContent = `Sound Clip: ${currentAudioIndex + 1} of ${Items.length}`;
+            slideContainer.appendChild(numberP);
+
+            audioPlayer.src = Items[currentAudioIndex].audio;
+
+            for (const key in Items[currentAudioIndex]) {
+                const value = Items[currentAudioIndex][key];
+                if (propertyHandlers[key] && value !== undefined) {
+                    const content = propertyHandlers[key](value);
+                    if (content) {
+                        slideContainer.innerHTML += content;
+                    }
+                }
+            }
+
+            const selectElement = document.getElementById("answerSelect");
+            if (selectElement) {
+                selectElement.addEventListener('focus', clearFeedback);
+            }
+        }
+
+        function clearFeedback() {
+            const feedback = document.getElementById("feedback");
+            feedback.innerHTML = ''; // Clear feedback
+        }
+
+        function nextSlide() {
+            currentAudioIndex = (currentAudioIndex + 1) % Items.length;
+            clearFeedback(); // Clear feedback
+            displayData();
+        }
+
+        function previousSlide() {
+            currentAudioIndex = (currentAudioIndex - 1 + Items.length) % Items.length;
+            clearFeedback(); // Clear feedback
+            displayData();
+        }
+
+        function goToSlide() {
+            const input = document.getElementById("slideInput").value;
+            const index = parseInt(input) - 1;
+            if (index >= 0 && index < Items.length) {
+                currentAudioIndex = index;
+                clearFeedback(); // Clear feedback
+                displayData();
+            } else {
+                alert("Please enter a valid slide number.");
+            }
+        }
+
+        function checkAnswer() {
+            const selectedAnswer = document.getElementById("answerSelect").value;
+            const correctAnswer = Items[currentAudioIndex].ca;
+            const feedback = document.getElementById("feedback");
+            feedback.innerHTML = ''; // Clear previous feedback
+
+            if (selectedAnswer === correctAnswer) {
+                feedback.innerHTML = "&#10004;"; // Tick mark
+                feedback.style.color = "green";
+            } else {
+                feedback.innerHTML = "&#10008;"; // Cross mark
+                feedback.style.color = "red";
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            const selectedText = document.getSelection().toString();
+            if (document.activeElement.tagName !== 'INPUT' && selectedText) {
+                if (e.key === "s") {
+                    utterance.text = selectedText;
+                    speechSynthesis.speak(utterance);
+                }
+            } 
+        });
+
+        displayData();
+    </script>
+    <footer>
+        <p>&#169; 2025 Eltayeb Mohamed.<br> All rights reserved.</p>
+    </footer>
+</body>
+</html>
